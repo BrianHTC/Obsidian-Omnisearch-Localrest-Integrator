@@ -1,0 +1,9 @@
+{
+  "id": "omnisearch-mcp",
+  "name": "Omnisearch MCP",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Exposes Omnisearch as an MCP tool through Local REST API.",
+  "author": "黃鼎鈞",
+  "isDesktopOnly": true
+}
