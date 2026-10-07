@@ -1,0 +1,1 @@
+# Obsidian-Omnisearch-Localrest-Integrator
