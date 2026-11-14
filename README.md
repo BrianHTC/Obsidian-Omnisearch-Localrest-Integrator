@@ -332,4 +332,4 @@ The sample's Jest tests (`npm test`, `src/*.test.ts`) were written for the sampl
 - [Omnisearch](https://github.com/scambier/obsidian-omnisearch) by scambier.
 - [PDF.js](https://mozilla.github.io/pdf.js/) by Mozilla, as bundled with Obsidian.
 
-`LICENSE` is the MIT licence inherited from the sample extension (Copyright (c) 2023, Adam Coddington).
+`LICENSE` is MIT. It retains the original sample-extension notice (Copyright (c) 2023, Adam Coddington) and adds Copyright (c) 2026, Brian Huang for this project's contributions.
