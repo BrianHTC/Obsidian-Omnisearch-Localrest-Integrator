@@ -1,9 +1,9 @@
 {
   "id": "omnisearch-mcp",
   "name": "Omnisearch MCP",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "minAppVersion": "1.0.0",
-  "description": "Exposes Omnisearch as an MCP tool through Local REST API.",
+  "description": "Fast Omnisearch MCP search with optional verified PDF mapping, direct preview opening, and persistent highlighting.",
   "author": "黃鼎鈞",
   "isDesktopOnly": true
 }

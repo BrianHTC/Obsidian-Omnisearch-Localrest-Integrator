@@ -1,0 +1,32 @@
+/* Omnisearch MCP: persistent PDF match highlight (CSS Custom Highlight API). */
+::highlight(omnisearch-mcp-pdf-target) {
+  background-color: rgb(255, 208, 0);
+}
+
+/* Floating button shown only while a persistent PDF highlight is active. */
+.omnisearch-mcp-clear-highlight-button {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.omnisearch-mcp-clear-highlight-button:hover {
+  filter: brightness(1.08);
+}

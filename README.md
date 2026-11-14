@@ -1,570 +1,335 @@
 # Omnisearch MCP
 
-Expose [Omnisearch](https://github.com/scambier/obsidian-omnisearch) as an MCP search tool through the built-in MCP server provided by [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api).
+Omnisearch MCP is an Obsidian plugin that lets an AI agent search your vault with [Omnisearch](https://github.com/scambier/obsidian-omnisearch) and open results inside Obsidian. It connects through the MCP server of [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api).
 
-The plugin lets an MCP-compatible agent search the current Obsidian vault using Omnisearch ranking, matching, and excerpts. It can also return indexed content from supported attachments, such as PDFs, when an appropriate text-extraction plugin is installed and configured.
+For PDFs it can:
 
-## Features
+- confirm the real viewer page of each match;
+- open the PDF at that page;
+- keep the matching passage highlighted in yellow until you remove it.
 
-- Adds an `omnisearch_search` tool to the Local REST API MCP endpoint
-- Searches the current Obsidian vault through Omnisearch
-- Returns ranked search results
-- Returns vault-relative file paths
-- Returns matched words and match positions
-- Returns contextual excerpts
-- Can include indexed PDF and document content when text extraction is available
-- Uses the authentication and HTTPS configuration already provided by Local REST API
-- Requires no additional standalone MCP server
+For Markdown notes it opens the note and selects the exact matching text.
 
-## Architecture
+- **Version:** 2.2.0
+- **Author:** 黃鼎鈞
+- **Desktop only**
 
-```text
-MCP-compatible agent
-        |
-        | MCP over HTTPS
-        v
-Obsidian Local REST API
-        |
-        | Extension API
-        v
-Omnisearch MCP
-        |
-        | omnisearch.api.search(query)
-        v
-Obsidian Omnisearch index
-```
-
-The plugin does not implement its own search engine. It calls the public Omnisearch API inside Obsidian:
-
-```js
-await app.plugins.plugins["omnisearch"].api.search(query)
-```
+---
 
 ## Requirements
 
-Install and enable the following Obsidian Community Plugins:
+| Component | Version |
+|---|---|
+| Obsidian | 1.0.0 or later (desktop). Persistent highlighting also needs the CSS Custom Highlight API, which recent Obsidian builds include. |
+| [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) | 5.3.0 or later (extension API version 3) |
+| [Omnisearch](https://github.com/scambier/obsidian-omnisearch) | Installed, enabled and indexed. To search inside PDFs, turn on PDF indexing in Omnisearch's settings. |
 
-1. **Omnisearch**
-2. **Local REST API**, version 5.3.0 or newer
-3. **Text Extractor**, optional, for indexing supported PDFs, Office documents, and other attachments
+PDF text is read with the PDF.js library built into Obsidian, so no extra PDF package or worker file is needed.
 
-Additional requirements for building from source:
+---
 
-- Node.js 22 or a compatible version required by the Local REST API sample extension toolchain
-- npm
-- Git, if cloning the project
+## Installation
 
-## MCP Tool
+1. Copy these files into `<vault>/.obsidian/plugins/omnisearch-mcp/`:
+   - `main.js`
+   - `manifest.json`
+   - `styles.css`
+2. In **Settings → Community plugins**, enable **Local REST API**, **Omnisearch** and **Omnisearch MCP**.
+3. Connect your MCP client to Local REST API's MCP endpoint:
+   - URL: `http://127.0.0.1:27123/mcp/` (HTTP port) or `https://127.0.0.1:27124/mcp/` (HTTPS port)
+   - Header: `Authorization: Bearer <your API key>`
+   - Transport: Streamable HTTP
 
-### Tool name
+The three tools below appear next to Local REST API's own tools.
 
-```text
-omnisearch_search
-```
+---
 
-### Purpose
+## MCP tools
 
-Search the current Obsidian vault using Omnisearch and return ranked paths, matches, scores, and excerpts.
+### `omnisearch_search`
 
-### Input
+Searches the vault and returns ranked files with match previews.
 
-```json
-{
-  "query": "copyright hyperlink"
-}
-```
+| Argument | Default | Range | Meaning |
+|---|---|---|---|
+| `query` | (required) | | Search text |
+| `page` | `1` | ≥ 1 | Page of file results |
+| `pageSize` | `10` | 1–10 | Files per page |
+| `occurrencesPerFile` | `3` | 1–10 | Previews per file |
+| `contextLength` | `120` | 40–500 | Characters of context around each match |
+| `mapPdfPages` | `false` | | `true` also confirms the PDF viewer page of each PDF match (slower) |
 
-### Example output
+With `mapPdfPages: false` (the fast default):
 
-```json
-{
-  "query": "123",
-  "count": 2,
-  "results": [
-    {
-      "score": 4.13,
-      "vault": "Research",
-      "path": "Notes/test1.md",
-      "basename": "test1",
-      "foundWords": ["123"],
-      "matches": [
-        {
-          "match": "123",
-          "offset": 26
-        }
-      ],
-      "excerpt": "123<br>456"
-    }
-  ]
-}
-```
+- PDFs are not opened; results come straight from the Omnisearch index.
+- Each match is a **Preview** without a page number.
+- The response includes a `searchSessionId` that stays valid for 10 minutes (`searchSessionExpiresInSeconds: 600`), so a preview can be opened later.
 
-The exact result fields are determined by the installed Omnisearch version.
+With `mapPdfPages: true`, PDF matches become verified **Occurrences** with confirmed `pageNumber` values.
 
-## Install a Prebuilt Release
+### `omnisearch_file_occurrences`
 
-A prebuilt installation does not require Node.js or npm on the destination computer.
+Lists the matches in one file, page by page.
 
-### 1. Prepare the plugin folder
+| Argument | Default | Range |
+|---|---|---|
+| `query` | (required) | |
+| `path` | (required, the exact path from search results) | |
+| `page` | `1` | ≥ 1 |
+| `pageSize` | `10` | 1–10 |
+| `contextLength` | `120` | 40–500 |
 
-The release folder should contain:
+- **PDFs:** every match is verified against the PDF text, with its viewer page and the text position needed for highlighting.
+- **Markdown:** matches include their character offset in the note.
 
-```text
-omnisearch-mcp/
-├── main.js
-├── manifest.json
-└── styles.css
-```
+### `omnisearch_open_occurrence`
 
-`styles.css` may be empty, but it can remain in the package.
+Opens one match in Obsidian. It has two modes.
 
-### 2. Copy the folder into the target vault
-
-Copy `omnisearch-mcp` into:
-
-```text
-YOUR-VAULT/.obsidian/plugins/
-```
-
-The final structure must be:
-
-```text
-YOUR-VAULT/
-└── .obsidian/
-    └── plugins/
-        └── omnisearch-mcp/
-            ├── main.js
-            ├── manifest.json
-            └── styles.css
-```
-
-Do not create an extra nested directory such as:
-
-```text
-.obsidian/plugins/omnisearch-mcp/omnisearch-mcp/main.js
-```
-
-### 3. Install the dependencies in Obsidian
-
-On the destination computer, install and enable:
-
-- Omnisearch
-- Local REST API
-- Text Extractor, if attachment indexing is needed
-
-### 4. Reload Obsidian
-
-Restart Obsidian or press:
-
-```text
-Ctrl+R
-```
-
-Then go to:
-
-```text
-Settings > Community plugins
-```
-
-Enable **Omnisearch MCP**.
-
-## Build from Source
-
-### 1. Place the source project in the vault
-
-The project directory should be:
-
-```text
-YOUR-VAULT/.obsidian/plugins/omnisearch-mcp/
-```
-
-### 2. Install dependencies
-
-In PowerShell:
-
-```powershell
-cd "YOUR-VAULT-PATH\.obsidian\plugins\omnisearch-mcp"
-npm.cmd install
-```
-
-Using `npm.cmd` avoids the common PowerShell error in which execution policy blocks `npm.ps1`.
-
-### 3. Build the plugin
-
-```powershell
-npm.cmd run build
-```
-
-Confirm that the build produced `main.js`:
-
-```powershell
-Get-ChildItem .\main.js, .\manifest.json
-```
-
-Confirm that the compiled file contains the MCP tool name:
-
-```powershell
-Select-String -Path .\main.js -Pattern "omnisearch_search"
-```
-
-### 4. Reload and enable the plugin
-
-Restart Obsidian or press `Ctrl+R`, then enable **Omnisearch MCP** under Community plugins.
-
-## Manifest
-
-The plugin directory name and manifest ID must match:
+**Open a verified occurrence:**
 
 ```json
-{
-  "id": "omnisearch-mcp",
-  "name": "Omnisearch MCP",
-  "version": "1.0.0",
-  "minAppVersion": "1.0.0",
-  "description": "Exposes Omnisearch as an MCP tool through Local REST API.",
-  "author": "Your Name",
-  "isDesktopOnly": true
-}
+{ "mode": "verified-occurrence", "query": "Directive", "path": "Untitled/page.pdf", "occurrenceNumber": 10, "newLeaf": false }
 ```
 
-Directory name:
-
-```text
-omnisearch-mcp
-```
-
-Manifest ID:
-
-```text
-omnisearch-mcp
-```
-
-## Local MCP Connection
-
-Local REST API normally exposes its MCP server at:
-
-```text
-https://127.0.0.1:27124/mcp/
-```
-
-Authentication is handled by Local REST API, not by Omnisearch MCP. The MCP client must supply the Local REST API bearer token at connection time:
-
-```http
-Authorization: Bearer <LOCAL_REST_API_KEY>
-```
-
-`<LOCAL_REST_API_KEY>` is a placeholder. Never replace it with a real key in this README, source code, `manifest.json`, `main.js`, screenshots, Git commits, or release archives.
-
-Each computer has its own Local REST API configuration and API key. Configure the key only in the MCP client, connector, secret store, environment variable, or tunnel configuration used on that computer.
-
-Omnisearch MCP does not request, read, log, store, transmit, or embed the Local REST API key. Local REST API authenticates the request before invoking the `omnisearch_search` tool.
-
-After installing or updating this plugin, disconnect and reconnect the MCP client so it retrieves the updated tool list.
-
-## Remote Agent Connection
-
-A cloud-based agent cannot normally connect directly to `127.0.0.1`. To connect a remote agent, expose the Local REST API MCP endpoint through a secure HTTPS tunnel or another protected reverse proxy.
-
-The resulting route should forward to:
-
-```text
-https://127.0.0.1:27124/mcp/
-```
-
-Retain bearer-token authentication. Store the token only in your MCP client's protected connection or secret configuration. Never place it in source control, plugin files, build scripts, screenshots, logs, documentation, or tunnel URLs.
-
-## Verify the Installation
-
-Open Obsidian Developer Tools with:
-
-```text
-Ctrl+Shift+I
-```
-
-In the Console, verify that all required plugins are enabled:
-
-```js
-({
-  omnisearch: app.plugins.enabledPlugins.has("omnisearch"),
-  localRestApi: app.plugins.enabledPlugins.has("obsidian-local-rest-api"),
-  omnisearchMcp: app.plugins.enabledPlugins.has("omnisearch-mcp")
-})
-```
-
-Expected result:
-
-```js
-{
-  omnisearch: true,
-  localRestApi: true,
-  omnisearchMcp: true
-}
-```
-
-Verify that the plugin instance exists:
-
-```js
-app.plugins.plugins["omnisearch-mcp"]
-```
-
-It should return a plugin object rather than `undefined`.
-
-## Test Omnisearch Directly
-
-Before troubleshooting MCP, confirm that Omnisearch itself returns results:
-
-```js
-await app.plugins.plugins["omnisearch"].api.search("known text")
-```
-
-Replace `known text` with a distinctive word that definitely appears in an indexed note.
-
-Do not call the internal search engine with a string:
-
-```js
-app.plugins.plugins["omnisearch"].searchEngine.search("known text")
-```
-
-That internal method expects Omnisearch's parsed query object and may produce:
-
-```text
-TypeError: t.isEmpty is not a function
-```
-
-Always use the public API:
-
-```js
-app.plugins.plugins["omnisearch"].api.search("known text")
-```
-
-## Test Through an MCP Client
-
-After reconnecting the MCP client, verify that the tool list includes:
-
-```text
-omnisearch_search
-```
-
-Invoke it with:
+**Open a preview from a fast search:**
 
 ```json
-{
-  "query": "known text"
-}
+{ "mode": "search-preview", "searchSessionId": "<from omnisearch_search>", "fileNumber": 1, "previewNumber": 2, "newLeaf": false }
 ```
 
-A natural-language agent request can be:
+`newLeaf: true` opens the file in a new tab. The default, `false`, reuses the current tab.
 
-```text
-Use omnisearch_search to search my Obsidian vault for "known text".
+> **Preview M is not Occurrence M.** Preview numbers follow the Omnisearch index, while occurrence numbers follow the verified PDF text. The plugin maps a preview to the right occurrence for you.
+
+---
+
+## How a PDF match is opened
+
+1. The plugin opens the PDF at the verified page only (`file.pdf#page=N`).
+2. It waits up to 10 seconds for the page's text to render.
+3. It highlights the exact passage in yellow and scrolls it into view.
+4. A **Remove highlight** button appears in the bottom-right corner of the PDF view.
+
+Details:
+
+- The highlight is redrawn automatically if PDF.js re-renders the page, for example after zooming or scrolling away and back.
+- It stays until you click **Remove highlight** or open another match.
+- The plugin never uses Obsidian's built-in PDF Find. That avoids the PDF.js `injectLinkAnnotations` rendering error.
+
+### Opening a preview directly
+
+In `search-preview` mode the plugin:
+
+1. reads only the selected PDF;
+2. compares the preview with every verified occurrence in that file;
+3. opens the best match only when it is clearly better than the rest.
+
+The scoring adds up to:
+
+- +100 when the matched text is identical;
+- up to +100 for similar surrounding text;
+- up to +10 for a similar position in the file.
+
+It opens the best match only when the score is at least 120 **and** leads the next candidate by at least 8. Otherwise the result is:
+
+```json
+{ "opened": false, "resolutionStatus": "ambiguous", "requiresVerifiedOccurrenceSelection": true }
 ```
 
-## Troubleshooting
+In that case, list the file's occurrences with `omnisearch_file_occurrences` and open the chosen one.
 
-### The plugin does not appear in Community plugins
+### Reading the result
 
-Check that these files are directly inside the plugin directory:
+A PDF highlight succeeded when all three of these hold:
 
-```text
-.obsidian/plugins/omnisearch-mcp/main.js
-.obsidian/plugins/omnisearch-mcp/manifest.json
+```json
+{ "persistentOverlayApplied": true, "highlightType": "plugin-persistent-overlay", "jumpedToDestination": true }
 ```
 
-Also verify that the folder name matches the `id` in `manifest.json`.
+If `persistentOverlayApplied` is `false`, the PDF may still be open at the right page. `persistentOverlayMessage` says why the highlight failed:
 
-### The plugin appears but cannot be enabled
+| `persistentOverlayMessage` | What to do |
+|---|---|
+| `The PDF view for the target file could not be found.` | Close duplicate tabs of the same PDF, press `Ctrl+R`, and try again. |
+| `The page opened, but the target PDF text layer was unavailable.` | Same as above. Very large pages may also need longer to render. |
+| `The matching text could not be located in the rendered text layer.` | The page is correct, but the passage could not be marked. |
+| `The CSS Custom Highlight API is unavailable in this Obsidian build.` | Update Obsidian. |
+| `A newer highlight request replaced this one.` | A later open request took over. No action needed. |
 
-Open the Developer Console and look for:
+`openedInNewLeaf` only describes what happened. It is not part of the success check.
 
-```text
-Failed to load plugin omnisearch-mcp
+### Markdown
+
+A Markdown match opens the note and selects the exact text. Success looks like:
+
+```json
+{ "targetType": "markdown-selection", "exactTextSelected": true, "jumpedToDestination": true }
 ```
 
-Rebuild the plugin:
+### Other results
+
+| Field | Meaning |
+|---|---|
+| `resolutionStatus: expired-search-session` with `requiresNewSearch: true` | The 10-minute preview session ended or Obsidian was reloaded. Search again. |
+| `targetType: file` | The file opened, but no exact position was available. |
+
+---
+
+## How PDF matching works
+
+- Matching ignores spaces, line breaks and letter case. A word split across lines, or Chinese/Japanese text extracted with spaces between characters (`司 法 院`), still matches (`司法院`).
+- Because of this, the verified count can differ from Omnisearch's count. Searches with `mapPdfPages: true` show both, as `omnisearchMatchCount` and `pageMappedMatchCount`, with `matchCountStatus` set to `same` or `different`.
+- Results are cached in memory while Obsidian runs:
+  - **Page text:** up to 10 PDFs.
+  - **Search results:** up to 30 query/file combinations.
+- Caches are keyed by the file's path, modification time and size, so editing or replacing a PDF invalidates its entries automatically.
+- Each PDF result reports a mapping `status`:
+
+| `status` | Meaning |
+|---|---|
+| `mapped` | Text was read and searched. |
+| `no-text-layer` | The PDF has no text (for example a scanned image). Run OCR first. |
+| `encrypted` | The PDF is password-protected. |
+| `worker-missing` | Obsidian's built-in PDF.js could not be loaded. |
+| `parse-failed` | The PDF could not be read. `pageMappingMessage` has the details. |
+
+---
+
+## Using it with an AI agent
+
+`SKILL.md` in this folder tells an agent how to use the tools. It covers:
+
+- the fast-search defaults;
+- how to label Previews and Occurrences;
+- when to fall back to verified occurrences;
+- how to report highlight results.
+
+Recommended defaults for an ordinary search:
+
+```json
+{ "page": 1, "pageSize": 10, "occurrencesPerFile": 3, "contextLength": 120, "mapPdfPages": false }
+```
+
+When the user explicitly asks for verified PDF pages up front:
+
+```json
+{ "page": 1, "pageSize": 5, "occurrencesPerFile": 5, "contextLength": 120, "mapPdfPages": true }
+```
+
+Send one open request at a time. Rapid repeated opens of the same PDF can trigger PDF.js rendering errors.
+
+### After changing the plugin
+
+MCP clients cache tool definitions. After updating `main.js`:
+
+1. Turn **Omnisearch MCP** and **Local REST API** off and on again, then press `Ctrl+R`.
+2. In your agent platform (for example Copilot Studio), refresh or re-add the MCP connection, then save and publish.
+3. Start a new chat.
+
+If `omnisearch_open_occurrence` rejects `mode` or `searchSessionId`, the client is still using the old definitions.
+
+---
+
+## Building from source
 
 ```powershell
-npm.cmd run build
+npm.cmd install          # first time only
+npm.cmd run typecheck    # tsc -noEmit -skipLibCheck
+npm.cmd run build        # type-check, then bundle src/main.ts into main.js
+npm.cmd run dev          # rebuild main.js on every change
 ```
 
-Then reload Obsidian.
+Obsidian does not reload a plugin when `main.js` changes. After a rebuild, toggle the plugin off and on or press `Ctrl+R`.
 
-### `npm.ps1` is blocked by PowerShell
+Tested with TypeScript 5.9.3, obsidian 1.13.1, esbuild 0.28.0, zod 3.25.76, obsidian-local-rest-api 5.3.0 and Node 26.12.1.
 
-Use the Windows command wrapper:
+### Source layout
+
+| File | Purpose |
+|---|---|
+| `src/main.ts` | Plugin entry point. Connects to Local REST API (`getAPI`, extension API version 3) and registers everything. |
+| `src/context.ts` | Shared context: `app`, `pluginId`, `pluginDirectory`, `events`. |
+| `src/mcp.ts` | The three MCP tools, their input schemas, preview scoring and the open logic. |
+| `src/search-session.ts` | Stores previews for 10 minutes (up to 20 searches) so they can be opened later. |
+| `src/pdf-util.ts` | Reads PDF text with Obsidian's PDF.js, finds and verifies matches, and caches the results. |
+| `src/pdf-highlight.ts` | Draws the persistent highlight, redraws it after re-renders, and provides the Remove highlight button. |
+| `styles.css` | Yellow highlight colour and Remove highlight button style. |
+| `SKILL.md` | Instructions for AI agents. |
+
+### Checking a build
+
+These strings should all be present in `main.js`:
 
 ```powershell
-npm.cmd install
-npm.cmd run build
+$patterns = "omnisearch_search","omnisearch_file_occurrences","omnisearch_open_occurrence",
+  "search-preview","searchSessionId","requiresVerifiedOccurrenceSelection",
+  "createPdfQueryCacheKey","plugin-persistent-overlay","Remove highlight","markdown-selection"
+foreach ($p in $patterns) { "{0} : {1}" -f $p, (Select-String -Path .\main.js -SimpleMatch -Pattern $p -Quiet) }
 ```
 
-This avoids changing the PowerShell execution policy.
+`styles.css` must contain exactly one `::highlight(omnisearch-mcp-pdf-target)` rule. Extra rules make the highlight colours mix.
 
-### Omnisearch returns an empty array
+---
 
-An empty array means the call worked but no indexed result matched the query.
+## Template leftovers
 
-Try a distinctive word from a known note:
+This plugin started from the Local REST API sample extension, and `src/main.ts` still registers the sample's other features:
 
-```js
-await app.plugins.plugins["omnisearch"].api.search("distinctive-word")
-```
+| Feature | Address | Source |
+|---|---|---|
+| Vault statistics (API key required) | `GET /sample-extension/stats/` | `src/routes.ts` |
+| Ping (no API key) | `GET /sample-extension/ping/` | `src/routes.ts` |
+| Per-note statistics | `GET /vault/<note>/stats/`, `GET /active/stats/` | `src/vaultSubresource.ts` |
+| Event streams | `note-measured`, `css-change` | `src/events.ts` |
+| OpenAPI docs for the routes above | `/openapi.yaml` | `src/openapi.ts` |
 
-Refresh the Omnisearch index if necessary:
+They do not affect searching. To remove them, delete the matching `register…` calls in `src/main.ts` and rebuild.
 
-```js
-await app.plugins.plugins["omnisearch"].api.refreshIndex()
-```
+The sample's Jest tests (`npm test`, `src/*.test.ts`) were written for the sample and do not cover the Omnisearch tools.
 
-Wait for indexing to finish, then search again.
+---
 
-### The MCP client cannot see `omnisearch_search`
+## Known issues
 
-1. Confirm that Omnisearch, Local REST API, and Omnisearch MCP are enabled.
-2. Confirm that `main.js` contains `omnisearch_search`.
-3. Reload Obsidian.
-4. Disconnect and reconnect the MCP client.
-5. Verify that the client is connected to the correct computer and vault.
-6. Verify that the Local REST API version supports MCP extension tools.
+- The description of `omnisearch_open_occurrence` still says it falls back to Obsidian's built-in PDF search. It does not; that fallback is disabled on purpose.
+- `src/mcp.ts` contains two unused helpers left over from that fallback: `startPersistentPdfSearch` and `waitForPdfView`.
+- If the same PDF is open in several tabs, the plugin highlights the most recently used tab if it shows that PDF, and otherwise a visible tab of that PDF. Close duplicate tabs if the highlight lands in the wrong one.
 
-### Markdown works but PDFs do not appear
-
-Install and enable Text Extractor or another integration supported by Omnisearch. Wait for extraction and indexing to finish, then refresh the Omnisearch index.
-
-### The public MCP URL works on one computer but not another
-
-The HTTPS tunnel runs on a specific computer. Installing the plugin on a second computer does not transfer or redirect the original tunnel.
-
-Configure a tunnel or reverse proxy on the second computer and forward it to that computer's Local REST API MCP endpoint.
-
-## Updating the Plugin
-
-On the development computer:
-
-```powershell
-npm.cmd run build
-```
-
-Copy the updated files to the destination computer:
-
-```text
-main.js
-manifest.json
-styles.css
-```
-
-Replace the old files, reload Obsidian, and reconnect the MCP client.
-
-Increment the version in `manifest.json` for each distributed release.
-
-## API Key and Secret Handling
-
-Omnisearch MCP does **not** need an API key in its source code or settings. Authentication belongs to Local REST API and the connecting MCP client.
-
-Never put a real API key in any distributed plugin file, including:
-
-```text
-README.md
-main.js
-manifest.json
-styles.css
-src/*.ts
-package.json
-package-lock.json
-.env files included in a release
-```
-
-Use placeholders in documentation:
-
-```text
-<LOCAL_REST_API_KEY>
-```
-
-If local development requires an environment file, keep it outside the release archive and add it to `.gitignore`:
-
-```gitignore
-.env
-.env.*
-!.env.example
-*.key
-*.pem
-*.pfx
-*.p12
-secrets.json
-```
-
-Before publishing a release, scan the project for likely secrets in PowerShell:
-
-```powershell
-Get-ChildItem -Recurse -File |
-  Where-Object { $_.FullName -notmatch "node_modules|\.git" } |
-  Select-String -Pattern "Bearer\s+[A-Za-z0-9._~-]+|api[_-]?key|secret|token" -CaseSensitive:$false
-```
-
-Review every match. Expected matches may include placeholder names and documentation, but no real credential should appear.
-
-You can also confirm that the built plugin contains no bearer token:
-
-```powershell
-Select-String -Path .\main.js -Pattern "Bearer\s+|api[_-]?key|secret|token" -CaseSensitive:$false
-```
-
-The plugin's intended data flow is:
-
-```text
-MCP client stores the key
-        |
-        | Authorization header
-        v
-Local REST API authenticates the request
-        |
-        | invokes an already-authorized MCP tool
-        v
-Omnisearch MCP calls Omnisearch locally
-```
-
-The plugin must never log request headers or authentication data.
+---
 
 ## Security
 
-- Keep the Local REST API key only in the MCP client's protected connection or secret store.
-- Do not commit keys, tokens, certificates, or tunnel credentials to Git.
-- Do not embed credentials in `main.js`, `manifest.json`, source files, documentation, or release archives.
-- Do not place a bearer token in a URL or query string.
-- Do not expose the MCP endpoint publicly without authentication.
-- Prefer a secured HTTPS tunnel or authenticated reverse proxy.
-- Rotate the Local REST API key immediately if it is exposed.
-- Remember that an authorized MCP client can search information indexed from the vault, including extracted attachment content.
-- Review search excerpts before sending them to external AI services if the vault contains confidential material.
+- Every MCP tool goes through Local REST API's normal authentication. This plugin adds no unauthenticated access to vault content.
+- The template's `/sample-extension/ping/` route is public, but it returns no vault data.
+- Never put your Local REST API key in prompts, notes or logs.
+- The tools only read, open and highlight files. They never change vault content.
 
-## Privacy
+---
 
-Search runs inside Obsidian against the local Omnisearch index. However, returned paths, excerpts, and metadata are sent to whichever MCP client invokes the tool. The privacy behavior therefore depends on the connected MCP client and agent platform.
+## Changelog
 
-## Development Notes
+### 2.2.0
 
-The plugin uses the Local REST API extension API to register the MCP tool. Its core operation is equivalent to:
+- Fast search by default: Omnisearch previews with a 10-minute `searchSessionId`; PDFs are not opened.
+- New `search-preview` mode for `omnisearch_open_occurrence`, which maps a preview to a verified occurrence and refuses to guess when the match is unclear.
+- Verified PDF pages and text positions, using Obsidian's built-in PDF.js.
+- Caching of PDF page text and search results.
+- Persistent yellow highlight with automatic redraw and a **Remove highlight** button.
+- PDFs open at the page only; built-in PDF Find is no longer used.
+- `newLeaf` is respected for every open; nothing forces a new tab.
+- Exact text selection for Markdown matches.
 
-```ts
-const omnisearch = plugins["omnisearch"];
-const results = await omnisearch.api.search(query);
-```
+### 1.1.0
 
-The MCP tool is read-only and idempotent. It does not create, edit, rename, or delete vault files.
+- Earlier release: search, occurrences and opening results, without previews, verified-page caching or persistent highlighting.
 
-## License
+---
 
-Add the license selected for your distribution, for example MIT:
+## Credits
 
-```text
-MIT License
-```
+- [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) and its sample API extension, by Adam Coddington (MIT).
+- [Omnisearch](https://github.com/scambier/obsidian-omnisearch) by scambier.
+- [PDF.js](https://mozilla.github.io/pdf.js/) by Mozilla, as bundled with Obsidian.
 
-If this project contains code copied or adapted from another repository, retain the notices and attribution required by that project's license.
-
-## Acknowledgements
-
-- Obsidian
-- Omnisearch
-- Obsidian Local REST API
-- Obsidian Local REST API Sample API Extension
-- Text Extractor
+`LICENSE` is the MIT licence inherited from the sample extension (Copyright (c) 2023, Adam Coddington).

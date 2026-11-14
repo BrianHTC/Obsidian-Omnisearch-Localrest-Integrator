@@ -35,9 +35,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// node_modules/obsidian-local-rest-api/publicApi.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/obsidian-local-rest-api/publicApi.js
 var require_publicApi = __commonJS({
-  "node_modules/obsidian-local-rest-api/publicApi.js"(exports) {
+  "../../OneDrive/\u6587\u4EF6/\u7814\u7A76\u8A08\u756B/.obsidian/plugins/omnisearch-mcp/node_modules/obsidian-local-rest-api/publicApi.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ApiVersionUnsupportedError = exports.LOCAL_REST_API_PLUGIN_ID = void 0;
@@ -76,7 +76,7 @@ __export(main_exports, {
   default: () => LocalRestApiSampleExtensionPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian = require("obsidian");
+var import_obsidian3 = require("obsidian");
 var import_obsidian_local_rest_api = __toESM(require_publicApi());
 
 // src/stats.ts
@@ -138,7 +138,10 @@ function registerEvents(api, context) {
   });
 }
 
-// node_modules/zod/v3/external.js
+// src/mcp.ts
+var import_obsidian2 = require("obsidian");
+
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/external.js
 var external_exports = {};
 __export(external_exports, {
   BRAND: () => BRAND,
@@ -250,7 +253,7 @@ __export(external_exports, {
   void: () => voidType
 });
 
-// node_modules/zod/v3/helpers/util.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -384,7 +387,7 @@ var getParsedType = (data) => {
   }
 };
 
-// node_modules/zod/v3/ZodError.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/ZodError.js
 var ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -502,7 +505,7 @@ ZodError.create = (issues) => {
   return error;
 };
 
-// node_modules/zod/v3/locales/en.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/locales/en.js
 var errorMap = (issue, _ctx) => {
   let message;
   switch (issue.code) {
@@ -605,7 +608,7 @@ var errorMap = (issue, _ctx) => {
 };
 var en_default = errorMap;
 
-// node_modules/zod/v3/errors.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default;
 function setErrorMap(map) {
   overrideErrorMap = map;
@@ -614,7 +617,7 @@ function getErrorMap() {
   return overrideErrorMap;
 }
 
-// node_modules/zod/v3/helpers/parseUtil.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -629,15 +632,15 @@ var makeIssue = (params) => {
       message: issueData.message
     };
   }
-  let errorMessage = "";
+  let errorMessage2 = "";
   const maps = errorMaps.filter((m) => !!m).slice().reverse();
   for (const map of maps) {
-    errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+    errorMessage2 = map(fullIssue, { data, defaultError: errorMessage2 }).message;
   }
   return {
     ...issueData,
     path: fullPath,
-    message: errorMessage
+    message: errorMessage2
   };
 };
 var EMPTY_PATH = [];
@@ -724,14 +727,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// node_modules/zod/v3/helpers/errorUtil.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message == null ? void 0 : message.message;
 })(errorUtil || (errorUtil = {}));
 
-// node_modules/zod/v3/types.js
+// ../../OneDrive/文件/研究計畫/.obsidian/plugins/omnisearch-mcp/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -4188,44 +4191,1275 @@ var coerce = {
 };
 var NEVER = INVALID;
 
+// src/pdf-util.ts
+var import_obsidian = require("obsidian");
+var MAX_CACHE_ENTRIES = 10;
+var MAX_QUERY_CACHE_ENTRIES = 30;
+var DEFAULT_CONTEXT_CHARACTERS = 120;
+var pageCache = /* @__PURE__ */ new Map();
+var queryCache = /* @__PURE__ */ new Map();
+var inFlightExtractions = /* @__PURE__ */ new Map();
+function createPageCacheKey(file) {
+  return `${file.path}|${file.stat.mtime}|${file.stat.size}`;
+}
+function createPdfQueryCacheKey(file, query, caseSensitive, wholeWord, contextCharacters, maxPages) {
+  return [
+    file.path,
+    file.stat.mtime,
+    file.stat.size,
+    normalizeQuery(query, caseSensitive),
+    caseSensitive ? "case" : "nocase",
+    wholeWord ? "whole" : "partial",
+    contextCharacters,
+    maxPages === null ? "all-pages" : `pages-${maxPages}`
+  ].join("|");
+}
+function trimCache(cache, limit) {
+  while (cache.size > limit) {
+    let oldestKey = null;
+    let oldest = Number.POSITIVE_INFINITY;
+    for (const [key, entry] of cache) {
+      if (entry.touchedAt < oldest) {
+        oldest = entry.touchedAt;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey === null) break;
+    cache.delete(oldestKey);
+  }
+}
+var WHITESPACE = /\s/;
+function buildSearchIndex(text, caseSensitive = false) {
+  let normalized = "";
+  const map = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (WHITESPACE.test(char)) continue;
+    const folded = caseSensitive ? char : char.toLowerCase();
+    for (let part = 0; part < folded.length; part += 1) {
+      normalized += folded[part];
+      map.push(index);
+    }
+  }
+  return { normalized, map };
+}
+function normalizeQuery(query, caseSensitive = false) {
+  return buildSearchIndex(query.trim(), caseSensitive).normalized;
+}
+function isWordCharacter(char) {
+  return Boolean(char) && /[\p{L}\p{N}_]/u.test(char);
+}
+function cleanContext(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+function createContext(text, start, end, contextCharacters) {
+  const matchLength = Math.max(end - start, 1);
+  const before = Math.max(0, Math.floor((contextCharacters - matchLength) / 2));
+  const from = Math.max(0, start - before);
+  const to = Math.min(text.length, Math.max(from + contextCharacters, end));
+  return `${from > 0 ? "..." : ""}${cleanContext(text.slice(from, to))}${to < text.length ? "..." : ""}`;
+}
+var pdfJsPromise = null;
+async function getPdfJs() {
+  if (!pdfJsPromise) {
+    pdfJsPromise = (0, import_obsidian.loadPdfJs)().then((lib) => {
+      if (!lib || typeof lib.getDocument !== "function") {
+        throw new Error("Obsidian's PDF.js library did not expose getDocument().");
+      }
+      return lib;
+    });
+    pdfJsPromise.catch(() => {
+      pdfJsPromise = null;
+    });
+  }
+  return pdfJsPromise;
+}
+function buildPageText(pdfPage, items) {
+  let text = "";
+  const ranges = [];
+  let itemIndex = 0;
+  for (const item of items) {
+    if (typeof item.str !== "string") continue;
+    const pageStart = text.length;
+    text += item.str;
+    ranges.push({ itemIndex, text: item.str, pageStart, pageEnd: text.length });
+    itemIndex += 1;
+    if (item.hasEOL) text += "\n";
+  }
+  return { pdfPage, text, items: ranges };
+}
+async function extractPdfText(app, file, maxPages) {
+  const cacheKey = createPageCacheKey(file);
+  const cached = pageCache.get(cacheKey);
+  if (cached) {
+    cached.touchedAt = Date.now();
+    const pages = maxPages === null ? cached.pages : cached.pages.slice(0, maxPages);
+    return {
+      status: pages.some((page) => page.text.trim()) ? "mapped" : "no-text-layer",
+      message: null,
+      totalPages: cached.totalPages,
+      pages,
+      complete: pages.length === cached.totalPages,
+      pageCacheHit: true
+    };
+  }
+  const flightKey = `${cacheKey}|${maxPages != null ? maxPages : "all"}`;
+  const pending = inFlightExtractions.get(flightKey);
+  if (pending) return pending;
+  const task = runExtraction(app, file, cacheKey, maxPages);
+  inFlightExtractions.set(flightKey, task);
+  try {
+    return await task;
+  } finally {
+    inFlightExtractions.delete(flightKey);
+  }
+}
+function failedExtraction(status, message) {
+  return { status, message, totalPages: 0, pages: [], complete: false, pageCacheHit: false };
+}
+async function runExtraction(app, file, cacheKey, maxPages) {
+  var _a, _b;
+  let pdfjs;
+  try {
+    pdfjs = await getPdfJs();
+  } catch (error) {
+    return failedExtraction("worker-missing", `PDF.js could not be loaded from Obsidian: ${errorMessage(error)}`);
+  }
+  let loadingTask = null;
+  let pdfDocument = null;
+  try {
+    const binary = await app.vault.readBinary(file);
+    loadingTask = pdfjs.getDocument({ data: new Uint8Array(binary) });
+    pdfDocument = await loadingTask.promise;
+    const totalPages = pdfDocument.numPages;
+    const pageLimit = maxPages === null ? totalPages : Math.min(maxPages, totalPages);
+    const pages = [];
+    for (let pageNumber = 1; pageNumber <= pageLimit; pageNumber += 1) {
+      const page = await pdfDocument.getPage(pageNumber);
+      const content = await page.getTextContent({
+        includeMarkedContent: true,
+        disableNormalization: true
+      });
+      pages.push(buildPageText(pageNumber, content.items));
+      (_a = page.cleanup) == null ? void 0 : _a.call(page);
+    }
+    const complete = pages.length === totalPages;
+    if (complete) {
+      pageCache.set(cacheKey, { key: cacheKey, totalPages, pages, touchedAt: Date.now() });
+      trimCache(pageCache, MAX_CACHE_ENTRIES);
+    }
+    const hasText = pages.some((page) => page.text.trim());
+    return {
+      status: hasText ? "mapped" : "no-text-layer",
+      message: hasText ? null : "The PDF has no extractable text layer (it may be a scanned image).",
+      totalPages,
+      pages,
+      complete,
+      pageCacheHit: false
+    };
+  } catch (error) {
+    const name = (_b = error == null ? void 0 : error.name) != null ? _b : "";
+    if (/^Pass\w*Exception$/.test(name)) {
+      return failedExtraction("encrypted", "The PDF is encrypted and cannot be opened without its key.");
+    }
+    return failedExtraction("parse-failed", `PDF text extraction failed: ${errorMessage(error)}`);
+  } finally {
+    try {
+      if (pdfDocument == null ? void 0 : pdfDocument.destroy) await pdfDocument.destroy();
+      else if (loadingTask == null ? void 0 : loadingTask.destroy) await loadingTask.destroy();
+    } catch (e) {
+    }
+  }
+}
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+function findSelection(page, start, end) {
+  const last = end - 1;
+  const startItem = page.items.find((item) => start >= item.pageStart && start < item.pageEnd);
+  const endItem = page.items.find((item) => last >= item.pageStart && last < item.pageEnd);
+  if (!startItem || !endItem) return null;
+  return {
+    startItemIndex: startItem.itemIndex,
+    startItemOffset: start - startItem.pageStart,
+    endItemIndex: endItem.itemIndex,
+    endItemOffset: last - endItem.pageStart + 1
+  };
+}
+function findPageOccurrences(file, page, normalizedQuery, caseSensitive, wholeWord, contextCharacters) {
+  if (!normalizedQuery || !page.text) return [];
+  const { normalized, map } = buildSearchIndex(page.text, caseSensitive);
+  const occurrences = [];
+  let from = 0;
+  while (from <= normalized.length - normalizedQuery.length) {
+    const found = normalized.indexOf(normalizedQuery, from);
+    if (found < 0) break;
+    from = found + 1;
+    const start = map[found];
+    const end = map[found + normalizedQuery.length - 1] + 1;
+    if (wholeWord && (isWordCharacter(page.text[start - 1]) || isWordCharacter(page.text[end]))) {
+      continue;
+    }
+    const selection = findSelection(page, start, end);
+    const destinationBase = `${file.path}#page=${page.pdfPage}`;
+    const destination = selection ? `${destinationBase}&selection=${selection.startItemIndex},${selection.startItemOffset},${selection.endItemIndex},${selection.endItemOffset}` : destinationBase;
+    occurrences.push({
+      filePath: file.path,
+      fileName: file.name,
+      pdfPage: page.pdfPage,
+      characterIndex: start,
+      pageOccurrenceIndex: occurrences.length,
+      matchedText: page.text.slice(start, end),
+      context: createContext(page.text, start, end, contextCharacters),
+      selection,
+      destination,
+      wikiLink: `[[${destination}|${file.basename}, p. ${page.pdfPage}]]`
+    });
+    from = found + normalizedQuery.length;
+  }
+  return occurrences;
+}
+async function findPdfTextOccurrences(app, pluginDirectory, fileOrPath, query, options = {}) {
+  var _a, _b, _c, _d, _e;
+  void pluginDirectory;
+  const file = typeof fileOrPath === "string" ? app.vault.getAbstractFileByPath((0, import_obsidian.normalizePath)(fileOrPath)) : fileOrPath;
+  const requestedPath = typeof fileOrPath === "string" ? fileOrPath : fileOrPath.path;
+  if (!(file instanceof import_obsidian.TFile) || file.extension.toLowerCase() !== "pdf") {
+    throw new Error(`No PDF exists at "${requestedPath}".`);
+  }
+  const caseSensitive = (_a = options.caseSensitive) != null ? _a : false;
+  const wholeWord = (_b = options.wholeWord) != null ? _b : false;
+  const contextCharacters = Math.max(20, (_c = options.contextCharacters) != null ? _c : DEFAULT_CONTEXT_CHARACTERS);
+  const startIndex = Math.max(0, Math.floor((_d = options.startIndex) != null ? _d : 0));
+  const pageSize = Math.max(1, Math.floor((_e = options.pageSize) != null ? _e : 10));
+  const maxPages = options.maxPages && options.maxPages > 0 ? Math.floor(options.maxPages) : null;
+  const base = { filePath: file.path, query, startIndex };
+  const paginate = (entry2, pageCacheHit, queryCacheHit) => {
+    const occurrences2 = entry2.occurrences.slice(startIndex, startIndex + pageSize);
+    return {
+      ...base,
+      status: "mapped",
+      message: entry2.truncated ? `Only the first ${entry2.searchedPages} of ${entry2.totalPages} pages were searched.` : null,
+      totalPages: entry2.totalPages,
+      searchedPages: entry2.searchedPages,
+      truncated: entry2.truncated,
+      totalOccurrences: entry2.occurrences.length,
+      returnedOccurrenceCount: occurrences2.length,
+      hasMoreOccurrences: startIndex + occurrences2.length < entry2.occurrences.length,
+      occurrences: occurrences2,
+      pageCacheHit,
+      queryCacheHit
+    };
+  };
+  const queryKey = createPdfQueryCacheKey(file, query, caseSensitive, wholeWord, contextCharacters, maxPages);
+  const cachedQuery = queryCache.get(queryKey);
+  if (cachedQuery) {
+    cachedQuery.touchedAt = Date.now();
+    return paginate(cachedQuery, true, true);
+  }
+  const extraction = await extractPdfText(app, file, maxPages);
+  if (extraction.status !== "mapped") {
+    return {
+      ...base,
+      status: extraction.status,
+      message: extraction.message,
+      totalPages: extraction.totalPages,
+      searchedPages: extraction.pages.length,
+      truncated: !extraction.complete,
+      totalOccurrences: 0,
+      returnedOccurrenceCount: 0,
+      hasMoreOccurrences: false,
+      occurrences: [],
+      pageCacheHit: extraction.pageCacheHit,
+      queryCacheHit: false
+    };
+  }
+  const normalizedQuery = normalizeQuery(query, caseSensitive);
+  const occurrences = [];
+  for (const page of extraction.pages) {
+    occurrences.push(
+      ...findPageOccurrences(file, page, normalizedQuery, caseSensitive, wholeWord, contextCharacters)
+    );
+  }
+  const entry = {
+    filePath: file.path,
+    mtime: file.stat.mtime,
+    size: file.stat.size,
+    query: normalizedQuery,
+    caseSensitive,
+    wholeWord,
+    contextCharacters,
+    maxPages,
+    totalPages: extraction.totalPages,
+    searchedPages: extraction.pages.length,
+    truncated: !extraction.complete,
+    occurrences,
+    touchedAt: Date.now()
+  };
+  queryCache.set(queryKey, entry);
+  trimCache(queryCache, MAX_QUERY_CACHE_ENTRIES);
+  return paginate(entry, extraction.pageCacheHit, false);
+}
+
+// src/pdf-highlight.ts
+var HIGHLIGHT_NAME = "omnisearch-mcp-pdf-target";
+var BUTTON_CLASS = "omnisearch-mcp-clear-highlight-button";
+var TEXT_LAYER_TIMEOUT_MS = 1e4;
+var POLL_INTERVAL_MS = 100;
+var REFRESH_DEBOUNCE_MS = 120;
+var generation = 0;
+var active = null;
+function highlightApiAvailable() {
+  return typeof CSS !== "undefined" && typeof CSS.highlights !== "undefined" && typeof Highlight === "function";
+}
+function delay(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+function leafFilePath(leaf) {
+  var _a, _b;
+  const view = leaf == null ? void 0 : leaf.view;
+  return (_b = (_a = view == null ? void 0 : view.file) == null ? void 0 : _a.path) != null ? _b : null;
+}
+function findPdfContainer(app, path) {
+  var _a, _b;
+  const recent = app.workspace.getMostRecentLeaf();
+  if (recent && leafFilePath(recent) === path && recent.view.getViewType() === "pdf") {
+    return recent.view.containerEl;
+  }
+  const candidates = app.workspace.getLeavesOfType("pdf").filter((leaf) => leafFilePath(leaf) === path).map((leaf) => leaf.view.containerEl);
+  return (_b = (_a = candidates.find((element) => element.isConnected && element.offsetParent !== null)) != null ? _a : candidates[0]) != null ? _b : null;
+}
+function findTextLayer(container, pdfPage) {
+  const page = container.querySelector(`.page[data-page-number="${pdfPage}"]`);
+  const layer = page == null ? void 0 : page.querySelector(".textLayer");
+  if (!layer || !layer.textContent || !layer.textContent.trim()) return null;
+  return layer;
+}
+function comparable(value) {
+  return buildSearchIndex(value).normalized;
+}
+function textPosition(element, offset) {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let remaining = offset;
+  let lastNode = null;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    lastNode = node;
+    if (remaining <= node.length) return { node, offset: remaining };
+    remaining -= node.length;
+  }
+  return lastNode ? { node: lastNode, offset: lastNode.length } : null;
+}
+function rangeFromSelection(layer, occurrence) {
+  const selection = occurrence.selection;
+  if (!selection) return null;
+  const expected = comparable(occurrence.matchedText);
+  const tryBuild = (lookup) => {
+    const startElement = lookup(selection.startItemIndex);
+    const endElement = lookup(selection.endItemIndex);
+    if (!startElement || !endElement) return null;
+    const start = textPosition(startElement, selection.startItemOffset);
+    const end = textPosition(endElement, selection.endItemOffset);
+    if (!start || !end) return null;
+    try {
+      const range = document.createRange();
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
+      return comparable(range.toString()) === expected ? range : null;
+    } catch (e) {
+      return null;
+    }
+  };
+  const indexed = Array.from(layer.querySelectorAll("[data-idx]"));
+  const byIndex = /* @__PURE__ */ new Map();
+  for (const element of indexed) {
+    const value = Number(element.dataset.idx);
+    if (Number.isFinite(value)) byIndex.set(value, element);
+  }
+  if (byIndex.size) {
+    const indexBase = Math.min(...Array.from(byIndex.keys()));
+    for (const shift of Array.from(/* @__PURE__ */ new Set([indexBase, 0, 1, -1]))) {
+      const range = tryBuild((itemIndex) => byIndex.get(itemIndex + shift));
+      if (range) return range;
+    }
+  }
+  const spans = Array.from(layer.querySelectorAll("span")).filter((span) => {
+    var _a;
+    return !span.classList.contains("markedContent") && ((_a = span.parentElement) == null ? void 0 : _a.tagName) !== "SPAN";
+  });
+  return tryBuild((itemIndex) => spans[itemIndex]);
+}
+function rangeFromTextSearch(layer, occurrence) {
+  var _a;
+  const needle = comparable(occurrence.matchedText);
+  if (!needle) return null;
+  let haystack = "";
+  const positions = [];
+  const walker = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const { normalized, map } = buildSearchIndex(node.data);
+    haystack += normalized;
+    for (const sourceIndex of map) positions.push({ node, offset: sourceIndex });
+  }
+  const starts = [];
+  for (let from = haystack.indexOf(needle); from >= 0; from = haystack.indexOf(needle, from + needle.length)) {
+    starts.push(from);
+  }
+  if (!starts.length) return null;
+  const wanted = Math.min((_a = occurrence.pageOccurrenceIndex) != null ? _a : 0, starts.length - 1);
+  const first = positions[starts[wanted]];
+  const last = positions[starts[wanted] + needle.length - 1];
+  if (!first || !last) return null;
+  try {
+    const range = document.createRange();
+    range.setStart(first.node, first.offset);
+    range.setEnd(last.node, last.offset + 1);
+    return range;
+  } catch (e) {
+    return null;
+  }
+}
+function buildRange(layer, occurrence) {
+  const selected = rangeFromSelection(layer, occurrence);
+  if (selected) return { range: selected, method: "text-item-selection" };
+  const searched = rangeFromTextSearch(layer, occurrence);
+  if (searched) return { range: searched, method: "text-search" };
+  return null;
+}
+function highlightRegistry() {
+  return CSS.highlights;
+}
+function setHighlight(range) {
+  highlightRegistry().set(HIGHLIGHT_NAME, new Highlight(range));
+}
+function rangeIsLive(range) {
+  return Boolean(range && range.startContainer.isConnected && range.endContainer.isConnected);
+}
+function refreshActiveHighlight() {
+  const state = active;
+  if (!state) return;
+  state.refreshTimer = null;
+  if (!state.container.isConnected) {
+    clearPersistentPdfHighlight();
+    return;
+  }
+  if (rangeIsLive(state.range)) return;
+  const layer = findTextLayer(state.container, state.occurrence.pdfPage);
+  if (!layer) return;
+  const built = buildRange(layer, state.occurrence);
+  if (!built) return;
+  state.range = built.range;
+  setHighlight(built.range);
+}
+function scheduleRefresh() {
+  const state = active;
+  if (!state || state.refreshTimer !== null) return;
+  state.refreshTimer = window.setTimeout(refreshActiveHighlight, REFRESH_DEBOUNCE_MS);
+}
+function createRemoveButton(state) {
+  const host = state.container;
+  if (window.getComputedStyle(host).position === "static") {
+    state.restorePosition = host.style.position;
+    host.style.position = "relative";
+  }
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = BUTTON_CLASS;
+  button.textContent = "Remove highlight";
+  button.setAttribute("aria-label", "Remove highlight");
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    clearPersistentPdfHighlight();
+  });
+  host.appendChild(button);
+  state.button = button;
+}
+function clearPersistentPdfHighlight() {
+  var _a, _b;
+  generation += 1;
+  const state = active;
+  active = null;
+  if (highlightApiAvailable()) highlightRegistry().delete(HIGHLIGHT_NAME);
+  if (!state) return;
+  if (state.refreshTimer !== null) window.clearTimeout(state.refreshTimer);
+  (_a = state.observer) == null ? void 0 : _a.disconnect();
+  (_b = state.button) == null ? void 0 : _b.remove();
+  if (state.restorePosition !== null) state.container.style.position = state.restorePosition;
+  state.range = null;
+}
+async function applyPersistentPdfHighlight(app, occurrence) {
+  var _a;
+  clearPersistentPdfHighlight();
+  const myGeneration = generation;
+  if (!highlightApiAvailable()) {
+    return { applied: false, reason: "The CSS Custom Highlight API is unavailable in this Obsidian build.", method: null };
+  }
+  const deadline = Date.now() + TEXT_LAYER_TIMEOUT_MS;
+  let container = null;
+  let layer = null;
+  let built = null;
+  while (Date.now() < deadline) {
+    if (myGeneration !== generation) {
+      return { applied: false, reason: "A newer highlight request replaced this one.", method: null };
+    }
+    container = findPdfContainer(app, occurrence.filePath);
+    layer = container ? findTextLayer(container, occurrence.pdfPage) : null;
+    if (layer) {
+      built = buildRange(layer, occurrence);
+      if (built) break;
+    }
+    await delay(POLL_INTERVAL_MS);
+  }
+  if (myGeneration !== generation) {
+    return { applied: false, reason: "A newer highlight request replaced this one.", method: null };
+  }
+  if (!container) {
+    return { applied: false, reason: "The PDF view for the target file could not be found.", method: null };
+  }
+  if (!layer) {
+    return { applied: false, reason: "The page opened, but the target PDF text layer was unavailable.", method: null };
+  }
+  if (!built) {
+    return { applied: false, reason: "The matching text could not be located in the rendered text layer.", method: null };
+  }
+  const state = {
+    occurrence,
+    container,
+    range: built.range,
+    observer: null,
+    button: null,
+    restorePosition: null,
+    refreshTimer: null
+  };
+  active = state;
+  setHighlight(built.range);
+  (_a = built.range.startContainer.parentElement) == null ? void 0 : _a.scrollIntoView({ block: "center", inline: "nearest" });
+  state.observer = new MutationObserver(scheduleRefresh);
+  state.observer.observe(container, { childList: true, subtree: true });
+  createRemoveButton(state);
+  return {
+    applied: true,
+    reason: built.method === "text-item-selection" ? "Persistent highlight applied from verified PDF.js text-item indexes." : "Persistent highlight applied by locating the verified match in the rendered text layer.",
+    method: built.method
+  };
+}
+
+// src/search-session.ts
+var SEARCH_SESSION_TTL_MS = 10 * 60 * 1e3;
+var MAX_SEARCH_SESSIONS = 20;
+var sessions = /* @__PURE__ */ new Map();
+function previewKey(fileNumber, previewNumber) {
+  return `${fileNumber}:${previewNumber}`;
+}
+function createSessionId() {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === "function") {
+    return cryptoApi.randomUUID();
+  }
+  return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+function pruneSessions(now) {
+  for (const [id, session] of sessions) {
+    if (session.expiresAt <= now) sessions.delete(id);
+  }
+  while (sessions.size > MAX_SEARCH_SESSIONS) {
+    const oldest = sessions.keys().next().value;
+    if (oldest === void 0) break;
+    sessions.delete(oldest);
+  }
+}
+function createSearchSession(previews) {
+  const now = Date.now();
+  const id = createSessionId();
+  const stored = /* @__PURE__ */ new Map();
+  for (const preview of previews) {
+    stored.set(previewKey(preview.fileNumber, preview.previewNumber), {
+      ...preview,
+      searchSessionId: id,
+      createdAt: now
+    });
+  }
+  sessions.set(id, {
+    id,
+    createdAt: now,
+    expiresAt: now + SEARCH_SESSION_TTL_MS,
+    previews: stored
+  });
+  pruneSessions(now);
+  return {
+    searchSessionId: id,
+    createdAt: now,
+    expiresAt: now + SEARCH_SESSION_TTL_MS,
+    previewCount: stored.size
+  };
+}
+function getSearchPreview(searchSessionId, fileNumber, previewNumber) {
+  var _a;
+  const now = Date.now();
+  pruneSessions(now);
+  const session = sessions.get(searchSessionId.trim());
+  if (!session || session.expiresAt <= now) return null;
+  return (_a = session.previews.get(previewKey(fileNumber, previewNumber))) != null ? _a : null;
+}
+
 // src/mcp.ts
 var OMNISEARCH_SEARCH_TOOL = "omnisearch_search";
+var OMNISEARCH_OCCURRENCES_TOOL = "omnisearch_file_occurrences";
+var OMNISEARCH_OPEN_OCCURRENCE_TOOL = "omnisearch_open_occurrence";
+var searchSchema = external_exports.object({
+  query: external_exports.string().trim().min(1),
+  page: external_exports.number().int().min(1).default(1),
+  pageSize: external_exports.number().int().min(1).max(10).default(10),
+  occurrencesPerFile: external_exports.number().int().min(1).max(10).default(3),
+  contextLength: external_exports.number().int().min(40).max(500).default(120),
+  mapPdfPages: external_exports.boolean().default(false)
+});
+var occurrencesSchema = external_exports.object({
+  query: external_exports.string().trim().min(1),
+  path: external_exports.string().trim().min(1),
+  page: external_exports.number().int().min(1).default(1),
+  pageSize: external_exports.number().int().min(1).max(10).default(10),
+  contextLength: external_exports.number().int().min(40).max(500).default(120)
+});
+var openSchema = external_exports.object({
+  mode: external_exports.enum(["verified-occurrence", "search-preview"]).default("verified-occurrence"),
+  query: external_exports.string().trim().min(1).optional(),
+  path: external_exports.string().trim().min(1).optional(),
+  occurrenceNumber: external_exports.number().int().min(1).optional(),
+  searchSessionId: external_exports.string().trim().min(1).optional(),
+  fileNumber: external_exports.number().int().min(1).optional(),
+  previewNumber: external_exports.number().int().min(1).optional(),
+  newLeaf: external_exports.boolean().default(false)
+}).superRefine((value, issueContext) => {
+  if (value.mode === "verified-occurrence") {
+    if (!value.query || !value.path || value.occurrenceNumber === void 0) {
+      issueContext.addIssue({
+        code: external_exports.ZodIssueCode.custom,
+        message: "Verified occurrence mode requires query, path, and occurrenceNumber."
+      });
+    }
+  } else if (!value.searchSessionId || value.fileNumber === void 0 || value.previewNumber === void 0) {
+    issueContext.addIssue({
+      code: external_exports.ZodIssueCode.custom,
+      message: "Search preview mode requires searchSessionId, fileNumber, and previewNumber."
+    });
+  }
+});
+function getOmnisearch(context) {
+  var _a, _b;
+  const plugins = (_a = context.app.plugins) == null ? void 0 : _a.plugins;
+  const omni = plugins == null ? void 0 : plugins.omnisearch;
+  if (!omni || typeof ((_b = omni.api) == null ? void 0 : _b.search) !== "function") {
+    throw new Error("Omnisearch is not installed, enabled, or ready.");
+  }
+  return omni;
+}
+function clean(value) {
+  return value.normalize("NFKC").replace(/\s+/g, " ").trim();
+}
+function createContext2(text, offset, matchLength, contextLength) {
+  const safeOffset = Math.max(0, Math.min(offset, text.length));
+  const before = Math.max(0, Math.floor((contextLength - Math.max(matchLength, 1)) / 2));
+  const start = Math.max(0, safeOffset - before);
+  const end = Math.min(
+    text.length,
+    Math.max(start + contextLength, safeOffset + Math.max(matchLength, 1))
+  );
+  return `${start > 0 ? "..." : ""}${clean(text.slice(start, end))}${end < text.length ? "..." : ""}`;
+}
+function derivePdfQuery(query, result) {
+  var _a, _b;
+  const exactMatch = ((_a = result.matches) != null ? _a : []).map((item) => {
+    var _a2;
+    return (_a2 = item.match) == null ? void 0 : _a2.trim();
+  }).find((item) => Boolean(item));
+  if (exactMatch) return exactMatch;
+  const foundWord = ((_b = result.foundWords) != null ? _b : []).map((item) => item.trim()).find(Boolean);
+  return foundWord || query;
+}
+function toPdfToolOccurrence(occurrence, startIndex, index) {
+  const occurrenceNumber = startIndex + index + 1;
+  return {
+    occurrenceNumber,
+    match: occurrence.matchedText,
+    context: occurrence.context,
+    pageNumber: occurrence.pdfPage,
+    pageNumberVerified: true,
+    pageNumberSource: "pdfjs-page-text",
+    pageCharacterOffset: occurrence.characterIndex,
+    characterOffset: null,
+    exactSelectionAvailable: occurrence.selection !== null,
+    selectionSource: occurrence.selection ? "pdfjs-text-items" : null,
+    nativeDestination: occurrence.destination,
+    wikiLink: occurrence.wikiLink,
+    selection: occurrence.selection,
+    destination: {
+      type: occurrence.selection ? "pdf-selection" : "pdf-page",
+      path: occurrence.filePath,
+      occurrenceNumber,
+      pageNumber: occurrence.pdfPage,
+      pageNumberVerified: true,
+      nativeDestination: occurrence.destination
+    }
+  };
+}
+async function mappedPdf(context, query, result, startIndex, pageSize, contextLength) {
+  var _a;
+  const path = (_a = result.path) != null ? _a : "";
+  const file = context.app.vault.getAbstractFileByPath((0, import_obsidian2.normalizePath)(path));
+  if (!(file instanceof import_obsidian2.TFile) || file.extension.toLowerCase() !== "pdf") {
+    throw new Error(`No PDF exists at "${path}".`);
+  }
+  return findPdfTextOccurrences(
+    context.app,
+    context.pluginDirectory,
+    file,
+    derivePdfQuery(query, result),
+    {
+      caseSensitive: false,
+      wholeWord: false,
+      contextCharacters: contextLength,
+      startIndex,
+      pageSize
+    }
+  );
+}
+async function textOccurrences(context, result, start, size, contextLength) {
+  var _a, _b;
+  const path = (_a = result.path) != null ? _a : "";
+  const file = context.app.vault.getAbstractFileByPath((0, import_obsidian2.normalizePath)(path));
+  const source = file instanceof import_obsidian2.TFile && file.extension.toLowerCase() === "md" ? await context.app.vault.read(file) : "";
+  return ((_b = result.matches) != null ? _b : []).slice(start, start + size).map((match, index) => {
+    var _a2, _b2, _c, _d, _e;
+    const occurrenceNumber = start + index + 1;
+    const characterOffset = typeof match.offset === "number" ? match.offset : null;
+    return {
+      occurrenceNumber,
+      match: (_a2 = match.match) != null ? _a2 : "",
+      context: source && characterOffset !== null ? createContext2(
+        source,
+        characterOffset,
+        Math.max((_c = (_b2 = match.match) == null ? void 0 : _b2.length) != null ? _c : 1, 1),
+        contextLength
+      ) : clean((_e = (_d = result.excerpt) != null ? _d : match.match) != null ? _e : "").slice(0, contextLength),
+      pageNumber: null,
+      pageNumberVerified: false,
+      pageNumberSource: "not-applicable",
+      characterOffset,
+      destination: characterOffset !== null && path.toLowerCase().endsWith(".md") ? { type: "markdown-position", path, occurrenceNumber, characterOffset } : { type: "file", path, occurrenceNumber, reason: "exact-position-unavailable" }
+    };
+  });
+}
+function resolveMarkdownOffset(source, expected, matchText) {
+  const safe = Math.max(0, Math.min(expected, source.length));
+  if (!matchText) return safe;
+  const sourceLower = source.toLocaleLowerCase();
+  const matchLower = matchText.toLocaleLowerCase();
+  if (sourceLower.slice(safe, safe + matchLower.length) === matchLower) return safe;
+  const windowStart = Math.max(0, safe - 500);
+  const windowEnd = Math.min(source.length, safe + 500);
+  const nearby = sourceLower.slice(windowStart, windowEnd).indexOf(matchLower);
+  if (nearby >= 0) return windowStart + nearby;
+  const global = sourceLower.indexOf(matchLower);
+  return global >= 0 ? global : safe;
+}
+function delay2(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+async function openPdfOccurrence(context, occurrence, searchQuery, newLeaf) {
+  clearPersistentPdfHighlight();
+  const pageDestination = `${occurrence.filePath}#page=${occurrence.pdfPage}`;
+  await context.app.workspace.openLinkText(
+    pageDestination,
+    "",
+    newLeaf ? "tab" : false
+  );
+  await delay2(600);
+  const persistentOverlay = await applyPersistentPdfHighlight(
+    context.app,
+    occurrence
+  );
+  let builtInSearch = {
+    started: false,
+    searchBarOpened: false,
+    message: "Built-in PDF search was not needed."
+  };
+  if (!persistentOverlay.applied) {
+    builtInSearch = {
+      started: false,
+      searchBarOpened: false,
+      message: "The persistent overlay was unavailable. The built-in PDF search fallback is disabled to avoid triggering an additional PDF.js rerender."
+    };
+  }
+  const exactDestinationResolved = occurrence.selection !== null;
+  return {
+    opened: true,
+    targetType: persistentOverlay.applied ? "pdf-overlay" : "pdf-page",
+    path: occurrence.filePath,
+    pageNumber: occurrence.pdfPage,
+    pageNumberVerified: true,
+    exactDestinationResolved,
+    nativeSelectionApplied: false,
+    nativeSelectionPersistent: false,
+    persistentOverlayApplied: persistentOverlay.applied,
+    persistentOverlayMessage: persistentOverlay.reason,
+    builtInSearchFallbackUsed: builtInSearch.started,
+    searchBarOpened: builtInSearch.searchBarOpened,
+    highlightedMatches: persistentOverlay.applied || builtInSearch.started,
+    highlightType: persistentOverlay.applied ? "plugin-persistent-overlay" : builtInSearch.started ? "native-pdf-search" : exactDestinationResolved ? "transient-native-selection" : "page-only",
+    searchQuery: builtInSearch.started ? searchQuery : null,
+    destination: pageDestination,
+    nativeDestination: occurrence.destination,
+    jumpedToDestination: true,
+    openStatus: persistentOverlay.applied ? `PDF opened at viewer page ${occurrence.pdfPage}, and the exact matching passage has a persistent highlight.` : builtInSearch.started ? `PDF opened at viewer page ${occurrence.pdfPage}. Obsidian's built-in PDF search is highlighting "${searchQuery}".` : exactDestinationResolved ? `PDF opened at viewer page ${occurrence.pdfPage}. The native selection highlight may be temporary.` : `PDF opened at viewer page ${occurrence.pdfPage}, but exact highlighting was unavailable.`,
+    builtInSearchMessage: builtInSearch.message
+  };
+}
+async function openMarkdown(context, file, characterOffset, matchText, newLeaf) {
+  const leaf = context.app.workspace.getLeaf(newLeaf ? "tab" : false);
+  await leaf.openFile(file, { active: true });
+  const view = leaf.view instanceof import_obsidian2.MarkdownView ? leaf.view : null;
+  if (!view) {
+    return {
+      opened: true,
+      targetType: "markdown-file",
+      path: file.path,
+      jumpedToDestination: false,
+      openStatus: "Markdown file opened, but the editor view was unavailable."
+    };
+  }
+  const source = await context.app.vault.read(file);
+  const resolvedOffset = resolveMarkdownOffset(source, characterOffset, matchText);
+  const position = view.editor.offsetToPos(resolvedOffset);
+  const selectionEnd = view.editor.offsetToPos(resolvedOffset + matchText.length);
+  view.editor.setSelection(position, selectionEnd);
+  view.editor.scrollIntoView({ from: position, to: selectionEnd }, true);
+  view.editor.focus();
+  return {
+    opened: true,
+    targetType: "markdown-selection",
+    path: file.path,
+    characterOffset: resolvedOffset,
+    line: position.line + 1,
+    column: position.ch + 1,
+    exactTextSelected: true,
+    jumpedToDestination: true,
+    openStatus: "Markdown file opened and the exact matching text was selected."
+  };
+}
+async function openFile(context, file, newLeaf, reason) {
+  const leaf = context.app.workspace.getLeaf(newLeaf ? "tab" : false);
+  await leaf.openFile(file, { active: true });
+  return {
+    opened: true,
+    targetType: "file",
+    path: file.path,
+    jumpedToDestination: false,
+    openStatus: `File opened. Exact destination navigation was unavailable: ${reason}.`
+  };
+}
+function normalizeComparisonText(value) {
+  return value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
+}
+function contextSimilarity(left, right) {
+  const leftTokens = new Set(normalizeComparisonText(left).split(" ").filter((token) => token.length > 1));
+  const rightTokens = new Set(normalizeComparisonText(right).split(" ").filter((token) => token.length > 1));
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  let intersection = 0;
+  for (const token of leftTokens) if (rightTokens.has(token)) intersection += 1;
+  return intersection / (/* @__PURE__ */ new Set([...leftTokens, ...rightTokens])).size;
+}
+function resolvePreviewOccurrence(preview, occurrences) {
+  var _a, _b;
+  const ranked = occurrences.map((occurrence, index) => {
+    const previewMatch = normalizeComparisonText(preview.match);
+    const candidateMatch = normalizeComparisonText(occurrence.matchedText);
+    let score = previewMatch === candidateMatch ? 100 : 0;
+    score += contextSimilarity(preview.context, occurrence.context) * 100;
+    const expected = occurrences.length <= 1 ? 0 : (preview.previewNumber - 1) / (occurrences.length - 1);
+    const actual = occurrences.length <= 1 ? 0 : index / (occurrences.length - 1);
+    score += Math.max(0, 1 - Math.abs(expected - actual)) * 10;
+    return { occurrence, index, score };
+  }).sort((left, right) => right.score - left.score);
+  const best = ranked[0];
+  if (!best) return { status: "not-found", occurrence: null, occurrenceNumber: null, bestScore: 0, scoreMargin: 0 };
+  const scoreMargin = best.score - ((_b = (_a = ranked[1]) == null ? void 0 : _a.score) != null ? _b : 0);
+  if (best.score < 120 || scoreMargin < 8) {
+    return { status: "ambiguous", occurrence: null, occurrenceNumber: null, bestScore: best.score, scoreMargin };
+  }
+  return { status: "resolved", occurrence: best.occurrence, occurrenceNumber: best.index + 1, bestScore: best.score, scoreMargin };
+}
 function registerMcp(api, context) {
   api.addMcpTool(
     OMNISEARCH_SEARCH_TOOL,
-    "Search the current Obsidian vault using Omnisearch. Returns ranked note paths, matches, scores, and excerpts.",
+    [
+      "Search the Obsidian vault using Omnisearch.",
+      "For a fast initial search use page 1, pageSize 10, occurrencesPerFile 3, contextLength 120, and mapPdfPages false.",
+      "PDF matches include verified viewer page numbers produced by the custom PDF page-search utility.",
+      "Markdown matches include editor destinations.",
+      "Never infer a PDF page from an offset, count, occurrence number, file number, or ranking."
+    ].join(" "),
     {
-      query: external_exports.string().min(1).describe("The text, keywords, phrase, tag, or Omnisearch query to search for.")
+      query: searchSchema.shape.query,
+      page: searchSchema.shape.page.optional(),
+      pageSize: searchSchema.shape.pageSize.optional(),
+      occurrencesPerFile: searchSchema.shape.occurrencesPerFile.optional(),
+      contextLength: searchSchema.shape.contextLength.optional(),
+      mapPdfPages: searchSchema.shape.mapPdfPages.optional()
+    },
+    async (args) => {
+      const input = searchSchema.parse(args);
+      const results = await getOmnisearch(context).api.search(input.query);
+      const start = (input.page - 1) * input.pageSize;
+      const selected = results.slice(start, start + input.pageSize);
+      const totalFilePages = results.length ? Math.ceil(results.length / input.pageSize) : 0;
+      const files = await Promise.all(selected.map(async (result, index) => {
+        var _a, _b, _c, _d, _e;
+        const path = (_a = result.path) != null ? _a : "";
+        const fileNumber = start + index + 1;
+        const displayName = result.basename || path || "Unnamed file";
+        const omnisearchMatchCount = (_c = (_b = result.matches) == null ? void 0 : _b.length) != null ? _c : 0;
+        if (input.mapPdfPages && path.toLowerCase().endsWith(".pdf")) {
+          const mapped = await mappedPdf(
+            context,
+            input.query,
+            result,
+            0,
+            input.occurrencesPerFile,
+            input.contextLength
+          );
+          const occurrencePreviews2 = mapped.occurrences.map(
+            (occurrence, occurrenceIndex) => toPdfToolOccurrence(occurrence, mapped.startIndex, occurrenceIndex)
+          );
+          const remaining2 = Math.max(
+            mapped.totalOccurrences - mapped.returnedOccurrenceCount,
+            0
+          );
+          return {
+            fileNumber,
+            selectionNumber: fileNumber,
+            path,
+            fileType: "pdf",
+            score: (_d = result.score) != null ? _d : null,
+            displaySummary: `${displayName} - ${mapped.totalOccurrences} page-mapped matches`,
+            omnisearchMatchCount,
+            pageMappedMatchCount: mapped.totalOccurrences,
+            matchCountStatus: omnisearchMatchCount === mapped.totalOccurrences ? "same" : "different",
+            pdfPageMappingStatus: mapped.status,
+            pdfPageCount: mapped.totalPages,
+            pageMappingMessage: mapped.message,
+            displayedOccurrenceCount: occurrencePreviews2.length,
+            remainingOccurrenceCount: remaining2,
+            showMoreOccurrencesAvailable: mapped.hasMoreOccurrences,
+            nextOccurrencePage: mapped.hasMoreOccurrences ? 2 : null,
+            occurrencePreviews: occurrencePreviews2
+          };
+        }
+        const occurrencePreviews = await textOccurrences(
+          context,
+          result,
+          0,
+          input.occurrencesPerFile,
+          input.contextLength
+        );
+        const remaining = Math.max(omnisearchMatchCount - occurrencePreviews.length, 0);
+        return {
+          fileNumber,
+          selectionNumber: fileNumber,
+          path,
+          fileType: path.toLowerCase().endsWith(".pdf") ? "pdf" : path.toLowerCase().endsWith(".md") ? "markdown" : "other",
+          resultMode: "fast-preview",
+          score: (_e = result.score) != null ? _e : null,
+          displaySummary: `${displayName} - ${omnisearchMatchCount} matches`,
+          omnisearchMatchCount,
+          pageMappedMatchCount: null,
+          pdfPageMappingStatus: "not-a-pdf",
+          displayedOccurrenceCount: occurrencePreviews.length,
+          remainingOccurrenceCount: remaining,
+          showMoreOccurrencesAvailable: remaining > 0,
+          nextOccurrencePage: remaining > 0 ? 2 : null,
+          occurrencePreviews,
+          previewPreviews: occurrencePreviews.map((preview) => ({
+            previewNumber: preview.occurrenceNumber,
+            previewType: "omnisearch-indexed",
+            match: preview.match,
+            context: preview.context,
+            characterOffset: preview.characterOffset,
+            pageNumber: null,
+            pageNumberVerified: false
+          })),
+          directPreviewOpenAvailable: occurrencePreviews.length > 0
+        };
+      }));
+      const previewInputs = [];
+      for (const file of files) {
+        if (!("previewPreviews" in file)) {
+          continue;
+        }
+        const previews = file.previewPreviews;
+        if (!Array.isArray(
+          previews
+        )) {
+          continue;
+        }
+        const fileType = file.fileType === "pdf" ? "pdf" : file.fileType === "markdown" ? "markdown" : "other";
+        for (const preview of previews) {
+          if (typeof (preview == null ? void 0 : preview.previewNumber) !== "number" || typeof (preview == null ? void 0 : preview.match) !== "string" || typeof (preview == null ? void 0 : preview.context) !== "string") {
+            continue;
+          }
+          const characterOffset = typeof preview.characterOffset === "number" ? preview.characterOffset : null;
+          previewInputs.push({
+            fileNumber: file.fileNumber,
+            previewNumber: preview.previewNumber,
+            query: input.query,
+            path: file.path,
+            fileType,
+            match: preview.match,
+            context: preview.context,
+            characterOffset
+          });
+        }
+      }
+      const session = createSearchSession(
+        previewInputs
+      );
+      return {
+        query: input.query,
+        resultMode: input.mapPdfPages ? "verified" : "fast-preview",
+        searchSessionId: session.searchSessionId,
+        searchSessionExpiresInSeconds: 600,
+        fileResultPage: input.page,
+        filesPerPage: input.pageSize,
+        returnedFileCount: files.length,
+        totalMatchingFiles: results.length,
+        totalFilePages,
+        remainingFileCount: Math.max(results.length - (start + files.length), 0),
+        showMoreFilesAvailable: input.page < totalFilePages,
+        nextFilePage: input.page < totalFilePages ? input.page + 1 : null,
+        files
+      };
+    },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false }
+  );
+  api.addMcpTool(
+    OMNISEARCH_OCCURRENCES_TOOL,
+    "Return one occurrence-results page for an exact Omnisearch file path. PDF results include verified viewer page numbers; Markdown results include editor positions.",
+    {
+      query: occurrencesSchema.shape.query,
+      path: occurrencesSchema.shape.path,
+      page: occurrencesSchema.shape.page.optional(),
+      pageSize: occurrencesSchema.shape.pageSize.optional(),
+      contextLength: occurrencesSchema.shape.contextLength.optional()
     },
     async (args) => {
       var _a, _b;
-      const { query } = external_exports.object({
-        query: external_exports.string().trim().min(1)
-      }).parse(args);
-      const plugins = (_a = context.app.plugins) == null ? void 0 : _a.plugins;
-      const omnisearch = plugins == null ? void 0 : plugins["omnisearch"];
-      if (!omnisearch) {
+      const input = occurrencesSchema.parse(args);
+      const result = (await getOmnisearch(context).api.search(input.query)).find((item) => item.path === input.path);
+      if (!result) {
         throw new Error(
-          "Omnisearch is not installed, enabled, or fully loaded."
+          `No Omnisearch result exists at path "${input.path}" for query "${input.query}".`
         );
       }
-      if (typeof ((_b = omnisearch.api) == null ? void 0 : _b.search) !== "function") {
-        throw new Error(
-          "Omnisearch is enabled, but its public search API is unavailable."
+      const start = (input.page - 1) * input.pageSize;
+      if (input.path.toLowerCase().endsWith(".pdf")) {
+        const mapped = await mappedPdf(
+          context,
+          input.query,
+          result,
+          start,
+          input.pageSize,
+          input.contextLength
         );
+        const occurrences2 = mapped.occurrences.map(
+          (occurrence, index) => toPdfToolOccurrence(occurrence, mapped.startIndex, index)
+        );
+        const totalPages2 = mapped.totalOccurrences ? Math.ceil(mapped.totalOccurrences / input.pageSize) : 0;
+        return {
+          query: input.query,
+          path: input.path,
+          fileType: "pdf",
+          pdfPageMappingStatus: mapped.status,
+          pdfPageCount: mapped.totalPages,
+          pageMappingMessage: mapped.message,
+          occurrencePage: input.page,
+          occurrencesPerPage: input.pageSize,
+          returnedOccurrenceCount: mapped.returnedOccurrenceCount,
+          totalOccurrences: mapped.totalOccurrences,
+          totalOccurrencePages: totalPages2,
+          remainingOccurrenceCount: Math.max(
+            mapped.totalOccurrences - (start + mapped.returnedOccurrenceCount),
+            0
+          ),
+          hasNextOccurrencePage: mapped.hasMoreOccurrences,
+          nextOccurrencePage: mapped.hasMoreOccurrences ? input.page + 1 : null,
+          occurrences: occurrences2
+        };
       }
-      const results = await omnisearch.api.search(query);
+      const occurrences = await textOccurrences(
+        context,
+        result,
+        start,
+        input.pageSize,
+        input.contextLength
+      );
+      const totalOccurrences = (_b = (_a = result.matches) == null ? void 0 : _a.length) != null ? _b : 0;
+      const totalPages = totalOccurrences ? Math.ceil(totalOccurrences / input.pageSize) : 0;
       return {
-        query,
-        count: results.length,
-        results
+        query: input.query,
+        path: input.path,
+        fileType: input.path.toLowerCase().endsWith(".md") ? "markdown" : "other",
+        occurrencePage: input.page,
+        occurrencesPerPage: input.pageSize,
+        returnedOccurrenceCount: occurrences.length,
+        totalOccurrences,
+        totalOccurrencePages: totalPages,
+        remainingOccurrenceCount: Math.max(
+          totalOccurrences - (start + occurrences.length),
+          0
+        ),
+        hasNextOccurrencePage: input.page < totalPages,
+        nextOccurrencePage: input.page < totalPages ? input.page + 1 : null,
+        occurrences
       };
     },
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false }
+  );
+  api.addMcpTool(
+    OMNISEARCH_OPEN_OCCURRENCE_TOOL,
+    [
+      "Open one exact Omnisearch occurrence in Obsidian.",
+      "For PDF occurrences, open the verified native selection and apply a plugin-owned persistent highlight overlay.",
+      "If the persistent overlay is unavailable, use Obsidian's built-in PDF search as a fallback.",
+      "For Markdown occurrences, open the file and select the exact matching text.",
+      "The server resolves all page, offset, and selection information.",
+      "Do not invent page numbers, offsets, selection indexes, or destinations."
+    ].join(" "),
     {
-      readOnlyHint: true,
-      idempotentHint: true,
-      openWorldHint: false
-    }
+      mode: external_exports.enum(["verified-occurrence", "search-preview"]).optional(),
+      query: external_exports.string().optional(),
+      path: external_exports.string().optional(),
+      occurrenceNumber: external_exports.number().int().min(1).optional(),
+      searchSessionId: external_exports.string().optional(),
+      fileNumber: external_exports.number().int().min(1).optional(),
+      previewNumber: external_exports.number().int().min(1).optional(),
+      newLeaf: external_exports.boolean().optional()
+    },
+    async (args) => {
+      var _a, _b, _c, _d;
+      const input = openSchema.parse(args);
+      if (input.mode === "search-preview") {
+        const preview = getSearchPreview(input.searchSessionId, input.fileNumber, input.previewNumber);
+        if (!preview) {
+          return { opened: false, resolutionStatus: "expired-search-session", requiresNewSearch: true, openStatus: "The search preview expired. Run the search again." };
+        }
+        const previewFile = context.app.vault.getAbstractFileByPath((0, import_obsidian2.normalizePath)(preview.path));
+        if (!(previewFile instanceof import_obsidian2.TFile)) {
+          return { opened: false, resolutionStatus: "file-not-found", requiresNewSearch: true, path: preview.path, openStatus: "The preview file no longer exists in the vault." };
+        }
+        if (preview.fileType === "pdf") {
+          const previewResult = (await getOmnisearch(context).api.search(preview.query)).find((item) => item.path === preview.path);
+          if (!previewResult) {
+            return { opened: false, resolutionStatus: "omnisearch-result-not-found", requiresNewSearch: true, path: preview.path, openStatus: "The original Omnisearch result is no longer available." };
+          }
+          const mapped = await mappedPdf(context, preview.query, previewResult, 0, Number.MAX_SAFE_INTEGER, 120);
+          if (mapped.status !== "mapped") {
+            return openFile(context, previewFile, input.newLeaf, (_a = mapped.message) != null ? _a : "verified PDF page mapping was unavailable");
+          }
+          const resolution = resolvePreviewOccurrence(preview, mapped.occurrences);
+          if (resolution.status !== "resolved" || !resolution.occurrence) {
+            return {
+              opened: false,
+              resolutionStatus: resolution.status,
+              requiresVerifiedOccurrenceSelection: true,
+              searchSessionId: input.searchSessionId,
+              fileNumber: input.fileNumber,
+              previewNumber: input.previewNumber,
+              query: preview.query,
+              path: preview.path,
+              bestScore: Math.round(resolution.bestScore * 100) / 100,
+              scoreMargin: Math.round(resolution.scoreMargin * 100) / 100,
+              openStatus: "The selected preview could not be mapped unambiguously. Display verified PDF occurrences for this file."
+            };
+          }
+          return {
+            resolutionStatus: "resolved",
+            previewNumber: preview.previewNumber,
+            resolvedOccurrenceNumber: resolution.occurrenceNumber,
+            mappingConfidence: { bestScore: Math.round(resolution.bestScore * 100) / 100, scoreMargin: Math.round(resolution.scoreMargin * 100) / 100 },
+            ...await openPdfOccurrence(context, resolution.occurrence, preview.query, input.newLeaf)
+          };
+        }
+        if (preview.fileType === "markdown" && preview.characterOffset !== null) {
+          return { resolutionStatus: "resolved", previewNumber: preview.previewNumber, ...await openMarkdown(context, previewFile, preview.characterOffset, preview.match, input.newLeaf) };
+        }
+        return openFile(context, previewFile, input.newLeaf, "the selected preview does not have an exact destination");
+      }
+      const query = input.query;
+      const path = input.path;
+      const occurrenceNumber = input.occurrenceNumber;
+      const result = (await getOmnisearch(context).api.search(query)).find((item) => item.path === path);
+      if (!result) {
+        throw new Error(
+          `No Omnisearch result exists at path "${path}" for query "${query}".`
+        );
+      }
+      const file = context.app.vault.getAbstractFileByPath((0, import_obsidian2.normalizePath)(path));
+      if (!(file instanceof import_obsidian2.TFile)) {
+        throw new Error(`No vault file exists at "${path}".`);
+      }
+      if (file.extension.toLowerCase() === "pdf") {
+        const mapped = await mappedPdf(
+          context,
+          query,
+          result,
+          occurrenceNumber - 1,
+          1,
+          160
+        );
+        const occurrence = mapped.occurrences[0];
+        if (mapped.status === "mapped" && occurrence) {
+          return openPdfOccurrence(
+            context,
+            occurrence,
+            derivePdfQuery(query, result),
+            input.newLeaf
+          );
+        }
+        return openFile(
+          context,
+          file,
+          input.newLeaf,
+          (_b = mapped.message) != null ? _b : "verified PDF page mapping was unavailable"
+        );
+      }
+      if (file.extension.toLowerCase() === "md") {
+        const match = ((_c = result.matches) != null ? _c : [])[occurrenceNumber - 1];
+        if (match && typeof match.offset === "number") {
+          return openMarkdown(
+            context,
+            file,
+            match.offset,
+            (_d = match.match) != null ? _d : "",
+            input.newLeaf
+          );
+        }
+        return openFile(
+          context,
+          file,
+          input.newLeaf,
+          "Markdown occurrence offset was unavailable"
+        );
+      }
+      return openFile(
+        context,
+        file,
+        input.newLeaf,
+        "the selected file type does not support exact occurrence navigation"
+      );
+    },
+    { readOnlyHint: false, idempotentHint: true, openWorldHint: false }
   );
 }
 
@@ -4406,11 +5640,11 @@ function registerOpenApiDescription(api) {
 // src/main.ts
 var REQUIRED_API_VERSION = 3;
 var HOST_LOADED_EVENT = "obsidian-local-rest-api:loaded";
-var LocalRestApiSampleExtensionPlugin = class extends import_obsidian.Plugin {
+var LocalRestApiSampleExtensionPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     /** This plugin's own event bus, the source of the events `events.ts` streams. */
-    this.events = new import_obsidian.Events();
+    this.events = new import_obsidian3.Events();
   }
   /**
    * Everything this extension adds to Obsidian Local REST API. Each function covers
@@ -4423,6 +5657,9 @@ var LocalRestApiSampleExtensionPlugin = class extends import_obsidian.Plugin {
     const context = {
       app: this.app,
       pluginId: this.manifest.id,
+      pluginDirectory: (0, import_obsidian3.normalizePath)(
+        `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+      ),
       events: this.events
     };
     registerRoutes(api, context);
@@ -4439,7 +5676,7 @@ var LocalRestApiSampleExtensionPlugin = class extends import_obsidian.Plugin {
       return (0, import_obsidian_local_rest_api.getAPI)(this.app, this.manifest, REQUIRED_API_VERSION);
     } catch (error) {
       if (error instanceof import_obsidian_local_rest_api.ApiVersionUnsupportedError) {
-        new import_obsidian.Notice(
+        new import_obsidian3.Notice(
           `${this.manifest.name} needs a newer version of Local REST API (extension API version ${error.requestedVersion}; version ${error.availableVersion} is installed).`
         );
         return void 0;
